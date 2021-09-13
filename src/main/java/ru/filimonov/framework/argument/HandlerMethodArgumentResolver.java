@@ -1,6 +1,7 @@
 package ru.filimonov.framework.argument;
 
-import org.example.http.framework.Request;
+
+import ru.filimonov.framework.Request;
 
 import java.io.OutputStream;
 import java.lang.reflect.Parameter;

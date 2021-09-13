@@ -2,10 +2,10 @@ package ru.filimonov.framework;
 
 import io.github.classgraph.ClassGraph;
 import lombok.extern.java.Log;
-import org.example.http.framework.annotation.RequestMapping;
-import org.example.http.framework.exception.*;
-import org.example.http.framework.guava.Bytes;
-import org.example.http.framework.resolver.argument.HandlerMethodArgumentResolver;
+import ru.filimonov.framework.annotation.RequestMapping;
+import ru.filimonov.framework.exception.*;
+import ru.filimonov.framework.guava.Bytes;
+import ru.filimonov.framework.argument.HandlerMethodArgumentResolver;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -109,7 +109,7 @@ public class Server {
 
     public void registerHandler(String method, String path, Handler handler) {
         try {
-            final var handle = handler.getClass().getMethod("handle", org.example.http.framework.Request.class, OutputStream.class);
+            final var handle = handler.getClass().getMethod("handle", ru.filimonov.framework.Request.class, OutputStream.class);
             final var handlerMethod = new HandlerMethod(handler, handle);
             Optional.ofNullable(routes.get(method))
                     .ifPresentOrElse(
@@ -237,7 +237,7 @@ public class Server {
                     form = parseQueryParams(new String(body, StandardCharsets.UTF_8));
 
                 // TODO: annotation monkey
-                final var request = org.example.http.framework.Request.builder()
+                final var request = ru.filimonov.framework.Request.builder()
                         .method(method)
                         .path(uri)
                         .headers(headers)
@@ -248,7 +248,7 @@ public class Server {
 
                 final var handlerMethod = Optional.ofNullable(routes.get(request.getMethod()))
                         .map(o -> o.get(request.getPath()))
-                        .orElse(new HandlerMethod(notFoundHandler, notFoundHandler.getClass().getMethod("handle", org.example.http.framework.Request.class, OutputStream.class)));
+                        .orElse(new HandlerMethod(notFoundHandler, notFoundHandler.getClass().getMethod("handle", ru.filimonov.framework.Request.class, OutputStream.class)));
 
                 try {
                     final var invokableMethod = handlerMethod.getMethod();
