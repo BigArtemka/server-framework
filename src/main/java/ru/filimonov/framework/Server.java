@@ -74,7 +74,7 @@ public class Server {
     private final List<HandlerMethodArgumentResolver> argumentResolvers = new ArrayList<>();
 
     // state -> NOT_STARTED, STARTED, STOP, STOPPED
-    private boolean stop = false;
+    private volatile boolean stop = false;
     private ServerSocket serverSocket;
 
     public void get(String path, Handler handler) {
@@ -109,7 +109,7 @@ public class Server {
 
     public void registerHandler(String method, String path, Handler handler) {
         try {
-            final var handle = handler.getClass().getMethod("handle", ru.filimonov.framework.Request.class, OutputStream.class);
+            final var handle = handler.getClass().getMethod("handle", Request.class, OutputStream.class);
             final var handlerMethod = new HandlerMethod(handler, handle);
             Optional.ofNullable(routes.get(method))
                     .ifPresentOrElse(
@@ -147,6 +147,7 @@ public class Server {
 
     public void stop() {
         this.stop = true;
+        service.shutdownNow();
         if (serverSocket != null) {
             try {
                 serverSocket.close();
@@ -233,22 +234,23 @@ public class Server {
                 in.skipNBytes(headersEndIndex);
                 final var body = in.readNBytes(contentLength);
                 Map<String, List<String>> form = new HashMap<>();
-                if (headers.get("Content-Type").equals("application/x-www-form-urlencoded"))
+                if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type")))
                     form = parseQueryParams(new String(body, StandardCharsets.UTF_8));
 
                 // TODO: annotation monkey
-                final var request = ru.filimonov.framework.Request.builder()
+                final var request = Request.builder()
                         .method(method)
                         .path(uri)
                         .headers(headers)
                         .body(body)
+                        .form(form)
                         .build();
 
                 final var response = out;
 
                 final var handlerMethod = Optional.ofNullable(routes.get(request.getMethod()))
                         .map(o -> o.get(request.getPath()))
-                        .orElse(new HandlerMethod(notFoundHandler, notFoundHandler.getClass().getMethod("handle", ru.filimonov.framework.Request.class, OutputStream.class)));
+                        .orElse(new HandlerMethod(notFoundHandler, notFoundHandler.getClass().getMethod("handle", Request.class, OutputStream.class)));
 
                 try {
                     final var invokableMethod = handlerMethod.getMethod();
