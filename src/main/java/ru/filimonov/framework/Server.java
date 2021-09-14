@@ -241,6 +241,7 @@ public class Server {
                 final var request = Request.builder()
                         .method(method)
                         .path(uri)
+                        .query(query)
                         .headers(headers)
                         .body(body)
                         .form(form)
